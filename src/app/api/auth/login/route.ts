@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { esClient, USERS_INDEX } from '@/lib/elasticsearch';
 import { verifyPassword, signJWT } from '@/lib/auth';
-import { z, ZodError } from 'zod';
+import { z } from 'zod';
 
 const Body = z.object({
     email: z.string().email(),

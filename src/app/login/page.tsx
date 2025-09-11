@@ -32,14 +32,13 @@ export default function LoginPage() {
         body: JSON.stringify({ email, password }),
       });
 
-      const data = await res.json();
       if (!res.ok) {
         setError('Login failed, please check your credentials.');
         return;
       }
       router.push('/verify');
     } catch (err) {
-      setError('Network error, please try again later.');
+      if (err instanceof Error) setError('Network error, please try again later.');
     } finally {
       setLoading(false);
     }

@@ -11,6 +11,7 @@
   "dependencies": {
     "@apollo/client": "^4.0.4",
     "@elastic/elasticsearch": "^9.1.1",
+    "@next/swc-win32-x64-msvc": "^15.5.3",
     "bcrypt": "^6.0.0",
     "cross-fetch": "^4.1.0",
     "graphql-yoga": "^5.15.2",

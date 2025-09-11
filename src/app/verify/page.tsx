@@ -29,11 +29,18 @@ const STATES = ['VIC', 'NSW', 'QLD', 'SA', 'WA', 'TAS', 'ACT', 'NT'];
 export default function VerifyPage() {
     const [postcode, setPostcode] = useState('');
     const [suburb, setSuburb] = useState('');
-    const [state, setState] = useState('VIC');
-
+    const [state, setState] = useState('');
+    const [suburbError, setSuburbError] = useState<string | null>(null);
     const [runVerify, { data, loading, error }] = useLazyQuery<VerifyData, VerifyVars>(VERIFY);
     const router = useRouter();
 
+    function validateSuburb(input: string): string | null {
+        if (!input.trim()) return "Suburb is required.";
+        if (input.length < 4) return "Suburb is too short.";
+        if (input.length > 50) return "Suburb is too long.";
+        if (!/^[A-Za-z\s'-]+$/.test(input)) return "Suburb must only contain letters, spaces, hyphens, or apostrophes.";
+        return null;
+    }
     // recover
     useEffect(() => {
         const saved = localStorage.getItem('verify-form');
@@ -54,6 +61,12 @@ export default function VerifyPage() {
 
     const onSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        const err = validateSuburb(suburb);
+        setSuburbError('')
+        if (err) {
+            setSuburbError(err);
+            return;
+        }
         await runVerify({ variables: { postcode, suburb, state } });
     };
 
@@ -98,6 +111,7 @@ export default function VerifyPage() {
             </form>
 
             {error && <p className="mt-4 text-red-600 text-sm">request error:{String(error.message)}</p>}
+            {suburbError && <p className="mt-4 text-red-600 text-sm">{suburbError}</p>}
 
             {result && (
                 <div className="mt-4 p-3 border rounded">

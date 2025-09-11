@@ -16,7 +16,6 @@ export const LOGS_INDEX = `${first}-${last}-logs`;
 export async function ensureIndex(index: string) {
   try {
     await esClient.indices.create({ index });
-  } catch (e: any) {
-    
+  } catch {
   }
 }

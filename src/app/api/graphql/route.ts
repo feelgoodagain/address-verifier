@@ -2,6 +2,9 @@ import { createYoga, createSchema } from 'graphql-yoga';
 import { verifyJWT } from '@/lib/auth';
 import { esClient, LOGS_INDEX } from '@/lib/elasticsearch';
 
+export const runtime = 'nodejs';
+
+// ---- GraphQL SDL ----
 const typeDefs = /* GraphQL */ `
   type VerifyResult {
     success: Boolean!
@@ -15,6 +18,11 @@ const typeDefs = /* GraphQL */ `
   }
 `;
 
+interface YogaContext {
+  userEmail?: string;
+}
+
+// ---- helpers ----
 function getCookieVal(name: string, cookieHeader: string | null) {
   if (!cookieHeader) return undefined;
   const m = cookieHeader
@@ -23,7 +31,9 @@ function getCookieVal(name: string, cookieHeader: string | null) {
     .find((s) => s.startsWith(`${name}=`));
   return m?.slice(name.length + 1);
 }
-
+function normalizeSuburb(name: string): string {
+  return name.trim().replace(/\s+/g, ' ').toUpperCase();
+}
 async function callAusPost(q: string, state: string) {
   const base = process.env.AUSPOST_BASE!;
   const url = new URL(base);
@@ -43,19 +53,20 @@ async function callAusPost(q: string, state: string) {
   const list = Array.isArray(data?.localities?.locality)
     ? data.localities.locality
     : data?.localities?.locality
-    ? [data.localities.locality]
-    : [];
+      ? [data.localities.locality]
+      : [];
   return list as Array<{
     category?: string;
     id?: number;
     latitude?: number | string;
     longitude?: number | string;
-    location?: string; // suburb name (UPPERCASE)
+    location?: string;
     postcode?: string | number;
     state?: string;
   }>;
 }
 
+// ---- resolvers ----
 const resolvers = {
   Query: {
     verifyAddress: async (_parent: unknown, args: any, ctx: any) => {
@@ -70,12 +81,12 @@ const resolvers = {
 
       try {
         const byPostcode = await callAusPost(postcode, state);
-        const target = suburb.toUpperCase();
+        const target = normalizeSuburb(suburb);
 
         const hit = byPostcode.find(
           (x) =>
             String(x.postcode) === postcode &&
-            (x.state || '').toUpperCase() === state &&
+            normalizeSuburb((x.state || '')) === state &&
             (x.location || '').toUpperCase() === target
         );
 
@@ -88,9 +99,8 @@ const resolvers = {
           }
         } else {
           const bySuburb = await callAusPost(target, state);
-
           const suburbInState = bySuburb.some(
-            (x) => (x.location || '').toUpperCase() === target && (x.state || '').toUpperCase() === state
+            (x) => normalizeSuburb((x.state || '')) === target && (x.state || '').toUpperCase() === state
           );
 
           if (!suburbInState) {
@@ -99,10 +109,11 @@ const resolvers = {
             message = `The postcode ${postcode} does not match the suburb ${suburb}.`;
           }
         }
-      } catch (err: any) {
-        message = `Australia Post request failed: ${err?.message || 'Unknown error'}`;
+      } catch (err) {
+        message = `Australia Post request failed: ${err instanceof Error ? err.message : 'Unknown error'}`;
       }
 
+      // ES logging
       try {
         await esClient.index({
           index: LOGS_INDEX,
@@ -118,7 +129,7 @@ const resolvers = {
           refresh: 'wait_for',
         });
       } catch {
-        // ignore log errors
+        // ignore
       }
 
       return { success, message, latitude, longitude };
@@ -126,25 +137,35 @@ const resolvers = {
   },
 };
 
+// ---- schema & yoga ----
 const schema = createSchema({ typeDefs, resolvers });
 
-const handler = createYoga({
+const yoga = createYoga<YogaContext>({
   schema,
   graphqlEndpoint: '/api/graphql',
+  fetchAPI: { Request, Response },
   context: async ({ request }) => {
     let userEmail: string | undefined;
-
     try {
       const token = getCookieVal('token', request.headers.get('cookie'));
       if (token) {
         const payload = await verifyJWT(token);
-        userEmail = (payload as any)?.email;
+        userEmail = (payload as { email?: string } | null)?.email;
       }
     } catch {
+      // ignore
     }
-
     return { userEmail };
   },
 });
 
-export { handler as GET, handler as POST, handler as OPTIONS };
+export function GET(req: Request, ctx: any) {
+  return yoga.handleRequest(req, ctx);
+}
+export function POST(req: Request, ctx: any) {
+  return yoga.handleRequest(req, ctx);
+}
+
+export function OPTIONS(req: Request, ctx: any) {
+  return yoga.handleRequest(req, ctx);
+}
