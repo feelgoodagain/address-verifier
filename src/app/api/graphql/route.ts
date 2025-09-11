@@ -120,9 +120,9 @@ const resolvers = {
           );
 
           if (!suburbInState) {
-            message = `The suburb ${suburb} does not exist in the state ${state}${JSON.stringify(byPostcode)}${JSON.stringify(bySuburb)}.`;
+            message = `The suburb ${suburb} does not exist in the state ${state}.`;
           } else {
-            message = `The postcode ${postcode} does not match the suburb ${suburb}${JSON.stringify(byPostcode)}${JSON.stringify(bySuburb)}.`;
+            message = `The postcode ${postcode} does not match the suburb ${suburb}.`;
           }
           // }
         }
