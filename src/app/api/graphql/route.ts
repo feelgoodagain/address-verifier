@@ -1,4 +1,5 @@
 import { createYoga, createSchema } from 'graphql-yoga';
+import { GraphQLError } from 'graphql';
 import { verifyJWT } from '@/lib/auth';
 import { esClient, LOGS_INDEX } from '@/lib/elasticsearch';
 
@@ -17,7 +18,9 @@ const typeDefs = /* GraphQL */ `
     verifyAddress(postcode: String!, suburb: String!, state: String!): VerifyResult!
   }
 `;
-
+function unwrapData(raw: any) {
+  return raw && typeof raw === 'object' && 'data' in raw ? (raw as any).data : raw;
+}
 interface YogaContext {
   userEmail?: string;
 }
@@ -31,6 +34,16 @@ function getCookieVal(name: string, cookieHeader: string | null) {
     .find((s) => s.startsWith(`${name}=`));
   return m?.slice(name.length + 1);
 }
+function normalizeRecord(x: any) {
+  return {
+    postcode: x.postcode || x.postal_code || null,
+    location: (x.suburb || x.location || '').toString().toUpperCase(),
+    state: (x.state || '').toString().toUpperCase(),
+    latitude: x.latitude ? Number(x.latitude) : undefined,
+    longitude: x.longitude ? Number(x.longitude) : undefined,
+  };
+}
+
 function normalizeSuburb(name: string): string {
   return name.trim().replace(/\s+/g, ' ').toUpperCase();
 }
@@ -44,17 +57,12 @@ async function callAusPost(q: string, state: string) {
     headers: { Authorization: `Bearer ${process.env.AUSPOST_TOKEN}` },
   });
 
-  if (!resp.ok) {
-    const text = await resp.text().catch(() => '');
-    throw new Error(`Australia Post API error ${resp.status}: ${text || resp.statusText}`);
-  }
+  const raw = await resp.json();
+  const data = unwrapData(raw); 
 
-  const data = await resp.json();
-  const list = Array.isArray(data?.localities?.locality)
-    ? data.localities.locality
-    : data?.localities?.locality
-      ? [data.localities.locality]
-      : [];
+  const loc = data?.localities?.locality;
+  const rawlist = Array.isArray(loc) ? loc : (loc ? [loc] : []);
+  const list = rawlist.map(normalizeRecord);
   return list as Array<{
     category?: string;
     id?: number;
@@ -70,10 +78,14 @@ async function callAusPost(q: string, state: string) {
 const resolvers = {
   Query: {
     verifyAddress: async (_parent: unknown, args: any, ctx: any) => {
-      const postcode = String(args.postcode || '').trim();
-      const suburb = String(args.suburb || '').trim();
-      const state = String(args.state || '').trim().toUpperCase();
-
+      const postcode = String(args.postcode);
+      const suburb = String(args.suburb);
+      const state = String(args.state);
+      if (!postcode || !suburb || !state) {
+        throw new GraphQLError('Postcode, Suburb, and State are required.', {
+          extensions: { code: 'BAD_USER_INPUT' }
+        });
+      }
       let success = false;
       let message = '';
       let latitude: number | undefined;
@@ -82,12 +94,16 @@ const resolvers = {
       try {
         const byPostcode = await callAusPost(postcode, state);
         const target = normalizeSuburb(suburb);
-
+        // if (byPostcode.length === 0) {
+        // message = `Australia Post request failed: please try again later.`;
+        // } else {
         const hit = byPostcode.find(
-          (x) =>
-            String(x.postcode) === postcode &&
-            normalizeSuburb((x.state || '')) === state &&
-            (x.location || '').toUpperCase() === target
+          (x) => {
+            const recordPostcode = x.postcode ? String(x.postcode) : postcode;
+            return recordPostcode === postcode &&
+              normalizeSuburb((x.state || '')) === state &&
+              normalizeSuburb((x.location || '')) === target
+          }
         );
 
         if (hit) {
@@ -100,14 +116,15 @@ const resolvers = {
         } else {
           const bySuburb = await callAusPost(target, state);
           const suburbInState = bySuburb.some(
-            (x) => normalizeSuburb((x.state || '')) === target && (x.state || '').toUpperCase() === state
+            (x) => normalizeSuburb((x.location || '')) === target && normalizeSuburb((x.state || '')) === state
           );
 
           if (!suburbInState) {
-            message = `The suburb ${suburb} does not exist in the state ${state}.`;
+            message = `The suburb ${suburb} does not exist in the state ${state}${JSON.stringify(byPostcode)}${JSON.stringify(bySuburb)}.`;
           } else {
-            message = `The postcode ${postcode} does not match the suburb ${suburb}.`;
+            message = `The postcode ${postcode} does not match the suburb ${suburb}${JSON.stringify(byPostcode)}${JSON.stringify(bySuburb)}.`;
           }
+          // }
         }
       } catch (err) {
         message = `Australia Post request failed: ${err instanceof Error ? err.message : 'Unknown error'}`;
