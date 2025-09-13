@@ -11,6 +11,7 @@
   "dependencies": {
     "@apollo/client": "^4.0.4",
     "@elastic/elasticsearch": "^9.1.1",
+    "@googlemaps/js-api-loader": "^1.16.10",
     "bcrypt": "^6.0.0",
     "cross-fetch": "^4.1.0",
     "graphql-yoga": "^5.15.2",
@@ -24,6 +25,7 @@
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4.1.13",
     "@types/bcrypt": "^6.0.0",
+    "@types/google.maps": "^3.58.1",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

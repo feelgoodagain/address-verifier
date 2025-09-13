@@ -3,7 +3,9 @@ import { useEffect, useMemo, useState } from 'react';
 import { gql } from '@apollo/client';
 import { useLazyQuery } from '@apollo/client/react';
 import { useRouter } from 'next/navigation';
-
+import dynamic from 'next/dynamic';
+// import GoogleMap from '@/components/google-map'
+const GoogleMap = dynamic(() => import('@/components/google-map'), { ssr: false });
 type VerifyData = {
   verifyAddress: {
     success: boolean;
@@ -74,7 +76,7 @@ export default function VerifyPage() {
         setPostcode(o.postcode || '');
         setSuburb(o.suburb || '');
         setState(o.state || '');
-      } catch {}
+      } catch { }
     }
   }, []);
 
@@ -189,7 +191,7 @@ export default function VerifyPage() {
           </fieldset>
         </form>
 
-       
+
         {error && <div className="mt-4 error-banner">{String(error.message)}</div>}
 
         {result && (
@@ -199,8 +201,8 @@ export default function VerifyPage() {
             </div>
 
             {result.success && result.latitude != null && result.longitude != null && (
-              <div className="mt-3 text-sm text-slate-600">
-                coordinates: {result.latitude}, {result.longitude}
+              <div className="mt-6">
+                <GoogleMap lat={result.latitude} lng={result.longitude} />
               </div>
             )}
           </div>
