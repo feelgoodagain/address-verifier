@@ -42,7 +42,6 @@ export default function VerifyPage() {
     fetchPolicy: 'no-cache',
   });
 
-  // ---- validators ----
   const validatePostcode = (pc: string): string | null => {
     if (!pc) return 'Postcode is required.';
     if (!/^\d{4}$/.test(pc)) return 'Postcode must be 4 digits.';
@@ -67,7 +66,6 @@ export default function VerifyPage() {
     [postcode, suburb, state]
   );
 
-  // ---- recover from localStorage ----
   useEffect(() => {
     const saved = localStorage.getItem('verify-form');
     if (saved) {
@@ -80,12 +78,10 @@ export default function VerifyPage() {
     }
   }, []);
 
-  // ---- persist to localStorage ----
   useEffect(() => {
     localStorage.setItem('verify-form', JSON.stringify({ postcode, suburb, state }));
   }, [postcode, suburb, state]);
 
-  // ---- submit ----
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const pcErr = validatePostcode(postcode);
@@ -95,7 +91,7 @@ export default function VerifyPage() {
     setSuburbError(sbErr);
     setStateError(stErr);
 
-    if (pcErr || sbErr || stErr) return; 
+    if (pcErr || sbErr || stErr) return;
 
     await runVerify({ variables: { postcode, suburb, state: state.toUpperCase() } });
   };
@@ -108,99 +104,108 @@ export default function VerifyPage() {
   const result = data?.verifyAddress;
 
   return (
-    <main className="max-w-xl mx-auto p-6">
-      <div className="flex items-center justify-between mb-4">
-        <h1 className="text-2xl font-bold">Address Verification</h1>
-        <button onClick={onLogout} className="text-sm underline">Logout</button>
+    <main className="mx-auto max-w-3xl px-4 py-10">
+      <div className="mb-4 flex items-center justify-between">
+        <button onClick={onLogout} className="link text-sm">Logout</button>
       </div>
 
-      <form onSubmit={onSubmit} className="space-y-4" aria-busy={loading}>
-        <fieldset disabled={loading} className="space-y-3">
-          <div>
-            <input
-              className={`border w-full p-2 rounded ${postcodeError ? 'border-red-500' : ''}`}
-              placeholder="Postcode (4 digits)"
-              inputMode="numeric"
-              pattern="\d{4}"
-              value={postcode}
-              onChange={(e) => {
-                const v = e.target.value.replace(/\D/g, '').slice(0, 4);
-                setPostcode(v);
-                if (postcodeError) setPostcodeError(validatePostcode(v));
-              }}
-              onBlur={() => setPostcodeError(validatePostcode(postcode))}
-              required
-              aria-invalid={!!postcodeError}
-            />
-            {postcodeError && <p className="mt-1 text-red-600 text-sm">{postcodeError}</p>}
-          </div>
-
-          <div>
-            <input
-              className={`border w-full p-2 rounded ${suburbError ? 'border-red-500' : ''}`}
-              placeholder="Suburb"
-              value={suburb}
-              onChange={(e) => {
-                setSuburb(e.target.value);
-                if (suburbError) setSuburbError(validateSuburb(e.target.value));
-              }}
-              onBlur={() => setSuburbError(validateSuburb(suburb))}
-              required
-              aria-invalid={!!suburbError}
-            />
-            {suburbError && <p className="mt-1 text-red-600 text-sm">{suburbError}</p>}
-          </div>
-
-          <div>
-            <select
-              className={`border w-full p-2 rounded ${stateError ? 'border-red-500' : ''}`}
-              value={state}
-              onChange={(e) => {
-                const v = e.target.value.toUpperCase();
-                setState(v);
-                if (stateError) setStateError(validateState(v));
-              }}
-              onBlur={() => setStateError(validateState(state))}
-              required
-              aria-invalid={!!stateError}
-            >
-              <option value="" disabled>
-                Select state…
-              </option>
-              {STATES.map((s) => (
-                <option key={s} value={s}>
-                  {s}
-                </option>
-              ))}
-            </select>
-            {stateError && <p className="mt-1 text-red-600 text-sm">{stateError}</p>}
-          </div>
-
-          <button
-            className={`w-full bg-black text-white px-4 py-2 rounded ${loading || !isFormValid ? 'opacity-60 cursor-not-allowed' : 'hover:bg-gray-800'}`}
-            disabled={loading || !isFormValid}
-          >
-            {loading ? 'Verifying…' : 'Verify address'}
-          </button>
-        </fieldset>
-      </form>
-
-      {error && <p className="mt-4 text-red-600 text-sm">{String(error.message)}</p>}
-
-      {result && (
-        <div className="mt-4 p-3 border rounded">
-          <p className={result.success ? 'text-green-700' : 'text-red-700'}>
-            {result.message}
-          </p>
-
-          {result.success && result.latitude != null && result.longitude != null && (
-            <div className="mt-3 text-sm text-gray-600">
-              coordinates: {result.latitude}, {result.longitude}
-              {/* TODO: Google Maps iframe or component */}
+      <div className="card card-pad">
+        <form onSubmit={onSubmit} aria-busy={loading} className="space-y-4">
+          <fieldset disabled={loading} className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {/* Postcode */}
+            <div className="sm:col-span-1">
+              <label className="label">Postcode</label>
+              <input
+                className={`input ${postcodeError ? 'border-[--color-danger] focus-visible:ring-red-100' : ''}`}
+                placeholder="4 digits"
+                inputMode="numeric"
+                pattern="\d{4}"
+                value={postcode}
+                onChange={(e) => {
+                  const v = e.target.value.replace(/\D/g, '').slice(0, 4);
+                  setPostcode(v);
+                  if (postcodeError) setPostcodeError(validatePostcode(v));
+                }}
+                onBlur={() => setPostcodeError(validatePostcode(postcode))}
+                required
+                aria-invalid={!!postcodeError}
+              />
+              {postcodeError && <p className="error-text">{postcodeError}</p>}
             </div>
-          )}
-        </div>
-      )}
+
+            {/* Suburb */}
+            <div className="sm:col-span-1">
+              <label className="label">Suburb</label>
+              <input
+                className={`input ${suburbError ? 'border-[--color-danger] focus-visible:ring-red-100' : ''}`}
+                placeholder="Suburb"
+                value={suburb}
+                onChange={(e) => {
+                  setSuburb(e.target.value);
+                  if (suburbError) setSuburbError(validateSuburb(e.target.value));
+                }}
+                onBlur={() => setSuburbError(validateSuburb(suburb))}
+                required
+                aria-invalid={!!suburbError}
+              />
+              {suburbError && <p className="error-text">{suburbError}</p>}
+            </div>
+
+            {/* State */}
+            <div className="sm:col-span-1">
+              <label className="label">State</label>
+              <select
+                className={`input ${stateError ? 'border-[--color-danger] focus-visible:ring-red-100' : ''}`}
+                value={state}
+                onChange={(e) => {
+                  const v = e.target.value.toUpperCase();
+                  setState(v);
+                  if (stateError) setStateError(validateState(v));
+                }}
+                onBlur={() => setStateError(validateState(state))}
+                required
+                aria-invalid={!!stateError}
+              >
+                <option value="" disabled>
+                  Select state…
+                </option>
+                {STATES.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
+              {stateError && <p className="error-text">{stateError}</p>}
+            </div>
+
+            <div className="sm:col-span-3">
+              <button
+                className="btn-primary w-full sm:w-auto"
+                disabled={loading || !isFormValid}
+              >
+                {loading ? 'Verifying…' : 'Verify Address'}
+              </button>
+            </div>
+          </fieldset>
+        </form>
+
+       
+        {error && <div className="mt-4 error-banner">{String(error.message)}</div>}
+
+        {result && (
+          <div className="mt-4">
+            <div className={result.success ? 'success-banner' : 'error-banner'}>
+              {result.message}
+            </div>
+
+            {result.success && result.latitude != null && result.longitude != null && (
+              <div className="mt-3 text-sm text-slate-600">
+                coordinates: {result.latitude}, {result.longitude}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </main>
   );
 }

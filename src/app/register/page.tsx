@@ -7,9 +7,11 @@ export default function RegisterPage() {
   const [password, setPassword] = useState('');
   const [msg, setMsg] = useState<string | null>(null);
   const router = useRouter();
-
+  const [loading, setLoading] = useState(false);
+  const canSubmit = !!email.trim() && !!password && !loading;
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
     setMsg(null);
     const res = await fetch('/api/auth/register', {
       method: 'POST',
@@ -23,17 +25,29 @@ export default function RegisterPage() {
     } else {
       setMsg(data.error || 'Register failed');
     }
+    setLoading(false);
   };
 
   return (
-    <main className="max-w-md mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-4">Register</h1>
-      <form onSubmit={onSubmit} className="space-y-3">
-        <input className="border w-full p-2" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
-        <input className="border w-full p-2" placeholder="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
-        <button className="bg-black text-white px-4 py-2 rounded">Register</button>
-      </form>
-      {msg && <p className="mt-3 text-sm">{msg}</p>}
+    <main className="mx-auto max-w-md px-4 py-10">
+      <div className="card card-pad">
+        <h1 className="text-2xl font-semibold tracking-tight">Register</h1>
+        <form className="mt-6 space-y-5" onSubmit={onSubmit}>
+          <div>
+            <label className="label">Email</label>
+            <input className="input" disabled={loading} type="email" value={email} onChange={e => setEmail(e.target.value)} />
+          </div>
+          <div>
+            <label className="label">Password</label>
+            <input className="input" disabled={loading} type="password" value={password} onChange={e => setPassword(e.target.value)} />
+          </div>
+          {msg && <p className="error-text">{msg}</p>}
+          <button className="btn-primary w-full" disabled={loading}>
+            { loading ? "Registering…" : "Register" }
+          </button>
+        </form>
+
+      </div>
     </main>
   );
 }

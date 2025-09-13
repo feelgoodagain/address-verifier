@@ -1,26 +1,68 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+
+  --color-primary: #0e77bd;
+  --color-bg: #f8fafc;
+  --color-surface: #ffffff;
+  --color-border: #e5e7eb;
+  --color-muted: #64748b;
+  --color-success: #16a34a;
+  --color-danger: #dc2626;
+
+  --color-primary-15: color-mix(in oklab, var(--color-primary) 15%, white);
+  --color-primary-20: color-mix(in oklab, var(--color-primary) 20%, white);
+
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+:root { color-scheme: light; }
+
+html, body {
+  @apply font-sans bg-bg text-slate-900 antialiased;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer components {
+  .card {
+    @apply bg-surface rounded-xl shadow-sm ring-1 ring-border;
   }
-}
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  .card-pad {
+    @apply p-6 sm:p-8;
+  }
+
+  .label {
+    @apply block text-sm font-medium text-slate-700 mb-1;
+  }
+
+  .input {
+    @apply h-11 w-full rounded-lg border border-border bg-white px-3 text-sm placeholder:text-slate-400 shadow-sm
+           focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-15 focus:border-primary;
+  }
+
+  .btn {
+    @apply inline-flex items-center justify-center h-11 px-5 rounded-xl font-medium transition disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center h-11 px-5 rounded-xl font-medium transition disabled:opacity-50 disabled:cursor-not-allowed
+           bg-primary text-white shadow-sm hover:opacity-95
+           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary;
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center justify-center h-11 px-5 rounded-xl font-medium transition disabled:opacity-50 disabled:cursor-not-allowed
+           bg-white text-primary ring-1 ring-border hover:bg-slate-50;
+  }
+
+  .help { @apply mt-1 text-xs text-slate-500; }
+  .error-text { @apply mt-1 text-sm text-danger; }
+
+  .success-banner { @apply rounded-lg bg-green-50 text-green-800 ring-1 ring-green-200 px-3 py-2; }
+  .error-banner   { @apply rounded-lg bg-red-50  text-red-800  ring-1 ring-red-200  px-3 py-2; }
+
+  .link { @apply text-primary hover:underline; }
 }

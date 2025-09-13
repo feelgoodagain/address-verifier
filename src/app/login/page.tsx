@@ -45,61 +45,27 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="max-w-md mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-4">Login to Address Verifier</h1>
-      <form onSubmit={onSubmit} aria-busy={loading} className="space-y-3">
-        <fieldset disabled={loading} className="space-y-3">
+    <main className="mx-auto max-w-md px-4 py-10">
+      <div className="card card-pad">
+        <h1 className="text-2xl font-semibold tracking-tight">Login</h1>
+        <form className="mt-6 space-y-5" onSubmit={onSubmit}>
           <div>
-            <label className="block text-sm font-medium">email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="border w-full p-2 rounded mt-1"
-              placeholder="you@example.com"
-              required
-            />
+            <label className="label">Email</label>
+            <input className="input" type="email" value={email} onChange={e => setEmail(e.target.value)} />
           </div>
-
           <div>
-            <label className="block text-sm font-medium">password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="border w-full p-2 rounded mt-1"
-              placeholder="please enter your password"
-              required
-            />
+            <label className="label">Password</label>
+            <input className="input" type="password" value={password} onChange={e => setPassword(e.target.value)} />
           </div>
-
-          {error && (
-            <p className="text-red-600 text-sm" role="alert" aria-live="polite">
-              {error}
-            </p>
-          )}
-
-          <button
-            type="submit"
-            disabled={!canSubmit}
-            className={`w-full flex items-center justify-center gap-2 rounded px-4 py-2 text-white 
-              ${canSubmit ? 'bg-black hover:bg-gray-800' : 'bg-gray-400 cursor-not-allowed'}`}
-            aria-disabled={!canSubmit}
-          >
-            {loading && (
-              <span
-                aria-hidden="true"
-                className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"
-              />
-            )}
-            {loading ? 'login...' : 'login'}
+          {error && <p className="error-text">{error}</p>}
+          <button className="btn-primary w-full" disabled={!canSubmit}>
+            {loading ? "Login…" : "Login"}
           </button>
-        </fieldset>
-      </form>
-
-      <p className="mt-4 text-sm">
-        need an account? <a className="underline" href="/register">register</a>
-      </p>
+        </form>
+        <p className="mt-4 text-sm text-slate-600">
+          Need an account? <a className="link" href="/register">Register</a>
+        </p>
+      </div>
     </main>
   );
 }
