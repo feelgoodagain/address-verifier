@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { c } from '@apollo/client/react/internal/compiler-runtime';
 
 export default function RegisterPage() {
   const [email, setEmail] = useState('');
@@ -27,9 +28,14 @@ export default function RegisterPage() {
     }
     setLoading(false);
   };
-
+  const onLogin = () => {
+    router.push('/login');
+  }
   return (
     <main className="mx-auto max-w-md px-4 py-10">
+      <div className="mb-4 flex items-center justify-end">
+        <button onClick={onLogin} className="link text-sm">Back to Login</button>
+      </div>
       <div className="card card-pad">
         <h1 className="text-2xl font-semibold tracking-tight">Register</h1>
         <form className="mt-6 space-y-5" onSubmit={onSubmit}>
