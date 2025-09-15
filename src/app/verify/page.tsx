@@ -107,7 +107,7 @@ export default function VerifyPage() {
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-10">
-      <div className="mb-4 flex items-center justify-between">
+      <div className="mb-4 flex items-center justify-end">
         <button onClick={onLogout} className="link text-sm">Logout</button>
       </div>
 

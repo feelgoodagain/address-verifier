@@ -58,7 +58,7 @@ async function callAusPost(q: string, state: string) {
   });
 
   const raw = await resp.json();
-  const data = unwrapData(raw); 
+  const data = unwrapData(raw);
 
   const loc = data?.localities?.locality;
   const rawlist = Array.isArray(loc) ? loc : (loc ? [loc] : []);
@@ -132,7 +132,7 @@ const resolvers = {
 
       // ES logging
       try {
-        await esClient.index({
+        esClient.index({
           index: LOGS_INDEX,
           document: {
             user: ctx?.userEmail || 'anonymous',
@@ -143,7 +143,7 @@ const resolvers = {
             success,
             error: success ? null : message,
           },
-          refresh: 'wait_for',
+          refresh: 'false',
         });
       } catch {
         // ignore
