@@ -118,6 +118,7 @@ export default function VerifyPage() {
             <div className="sm:col-span-1">
               <label className="label">Postcode</label>
               <input
+                name='postcode'
                 className={`input ${postcodeError ? 'border-[--color-danger] focus-visible:ring-red-100' : ''}`}
                 placeholder="4 digits"
                 inputMode="numeric"
@@ -139,6 +140,7 @@ export default function VerifyPage() {
             <div className="sm:col-span-1">
               <label className="label">Suburb</label>
               <input
+                name='suburb'
                 className={`input ${suburbError ? 'border-[--color-danger] focus-visible:ring-red-100' : ''}`}
                 placeholder="Suburb"
                 value={suburb}
@@ -157,6 +159,7 @@ export default function VerifyPage() {
             <div className="sm:col-span-1">
               <label className="label">State</label>
               <select
+                name="state"
                 className={`input ${stateError ? 'border-[--color-danger] focus-visible:ring-red-100' : ''}`}
                 value={state}
                 onChange={(e) => {
